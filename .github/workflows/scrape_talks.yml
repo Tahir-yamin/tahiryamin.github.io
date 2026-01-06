@@ -4,29 +4,47 @@ on:
   push:
     paths:
       - 'talks/**'
+      - '_talks/**'
       - 'talkmap.ipynb'
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write  # This workflow pushes to the repository
 
     steps:
     - uses: actions/checkout@v2
 
+    # Step 1: Set up Python
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
         python-version: '3.9'  # Specify the Python version you need
 
+    # Step 2: Install dependencies
     - name: Install dependencies
       run: |
         pip install jupyter pandas requests beautifulsoup4 geopy  # Add other dependencies as needed
         pip install getorg --upgrade
+        pip install ipykernel  # Install the ipykernel to ensure the kernel is available
 
+    # Step 3: Install Jupyter kernel (Optional but recommended)
+    - name: Install Jupyter kernel
+      run: |
+        python -m ipykernel install --user --name python3 --display-name "Python 3"
+
+    # Step 4: Check available kernels (for debugging)
+    - name: List available kernels
+      run: |
+        jupyter kernelspec list
+
+    # Step 5: Run Jupyter Notebook
     - name: Run Jupyter Notebook
       run: |
-        jupyter nbconvert --to notebook --execute talkmap.ipynb --output talkmap_out.ipynb
+        jupyter nbconvert --to notebook --execute talkmap.ipynb --output talkmap_out.ipynb --ExecutePreprocessor.kernel_name=python3  # Explicitly specify the kernel
 
+    # Step 6: Commit changes
     - name: Commit changes
       run: |
         git config user.name "github-actions[bot]"
